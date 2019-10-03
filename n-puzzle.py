@@ -26,9 +26,26 @@ class NPuzzleSearch:
 
     @staticmethod
     def swap_tiles(tile1, tile2, source):
+        """
+        :param tile1: [0, 1]
+        :param tile2: [0, 2]
+        :param source: puzzle
+        :return:
+        """
         tmp = source[tile1[0]][tile1[1]]
         source[tile1[0]][tile1[1]] = source[tile2[0]][tile2[1]]
         source[tile2[0]][tile2[1]] = tmp
+
+
+    def get_coordinate_of_empty_till(self, node):
+        empty_till = []
+        coordinates = []
+        for row in range(len(node)):
+            if 0 in node[row]:
+                 empty_till = [row, node[row].index(0)]
+
+        if empty_till:
+            if empty_till[0]
 
     @staticmethod
     def f_score(heuristic):
@@ -45,7 +62,12 @@ class NPuzzleSearch:
         :param current_node:
         :return:
         """
-        pass
+        node = current_node['puzzle'].copy()
+        empty_till_coordinate = self.get_coordinate_of_empty_till(current_node['puzzle'])
+        print(empty_till_coordinate)
+        # self.swap_tiles(empty_till_coordinate, )
+        exit()
+        # tmp = self.swap_tiles()
 
     def choose_next_node(self):
         """
@@ -55,15 +77,20 @@ class NPuzzleSearch:
         """
         return
 
-    @staticmethod
-    def final_state_reached():
-        return False
+    def final_state_reached(self, current_node):
+        return True if current_node['puzzle'] == self.final_node['puzzle'] else False
 
     def check_open_list(self):
         """
         Remove explored nodes.
         """
         print(self.open_list)
+
+    def print_puzzle(self, node):
+        # pattern = "{:^4}" * self.size
+        for i in node['puzzle']:
+            print(("{:^4}" * self.size).format(*i))
+        print('')
 
 
 class ASearch(NPuzzleSearch):
@@ -78,29 +105,20 @@ class ASearch(NPuzzleSearch):
         self.closed_list = []
 
     def solver(self):
-        current_node = dict(puzzle=self.initial_node, f_score=0)
-        print(current_node)
-        while self.final_state_reached():
-            self.generate_children(current_node=current_node)
-            self.closed_list.append(current_node)
-            self.check_open_list()
-            current_node = self.choose_next_node()
-        else:
-            print("FINAL STATE REACHED!")
+        # self.print_puzzle(self.initial_node)
+        # self.print_puzzle(self.final_node)
+        current_node = self.initial_node.copy()
 
-    # def main(self):
-    #     # check if solvable
-    #     initial = self.generate_initial_state(size=self.size)
-    #     if self.is_solvable(self.final):
-    #         for i in initial:
-    #             pattern = "{:^4}" * self.size
-    #             print(pattern.format(*i))
-    #         print('')
-    #         for i in self.final:
-    #             pattern = "{:^4}" * self.size
-    #             print(pattern.format(*i))
-    #     else:
-    #         print("UNSOLVABLE")
+        # self.print_puzzle(current_node)
+        while not self.final_state_reached(current_node):
+            self.print_puzzle(node=current_node)
+            self.generate_children(current_node=current_node)
+            # self.closed_list.append(current_node)
+            # self.check_open_list()
+            # current_node = self.choose_next_node()
+        # else:
+        #     print("FINAL STATE REACHED!")
+
     def __del__(self):
         print("Good By")
 
@@ -117,4 +135,4 @@ if __name__ == "__main__":
         exit(1)
 
     a_search = ASearch(size=int(sys.argv[-1]))
-    # a_search.()
+    a_search.solver()
