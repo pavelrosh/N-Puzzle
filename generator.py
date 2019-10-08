@@ -97,7 +97,21 @@ if __name__ == "__main__":
     w = len(str(s * s))
     print("# This puzzle is %s" % ("solvable" if solv else "unsolvable"))
     print("%d" % s)
+    print()
     for y in range(s):
         for x in range(s):
             print("%s" % (str(puzzle[x + y * s]).rjust(w))),
         print()
+
+
+class Node:
+    def __init__(self, puzzle, parent=None, g=0, h=0, f=0):
+        self.puzzle = puzzle
+        self.parent = parent
+        self.f = f
+        self.g = g
+        self.h = h
+
+    def __repr__(self): return f"< f-score={self.f}, puzzle: {self.puzzle}, g-score={self.g} >"
+
+    def __eq__(self, other): return self.puzzle == other.puzzle

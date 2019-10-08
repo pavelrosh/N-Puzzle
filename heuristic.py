@@ -4,8 +4,8 @@ class Heuristic:
         self.final_node = final_node
 
     def misplaced(self):
-        current = [y for x in self.current_node for y in x]
-        final = [y for x in self.final_node for y in x]
+        current = [y for x in self.current_node.puzzle for y in x]
+        final = [y for x in self.final_node.puzzle for y in x]
         h_score = 0
         i = 0
         while i < len(current):
@@ -17,5 +17,5 @@ class Heuristic:
         # print(h_score)
         return h_score
 
-    def __del__(self):
-        return "Heuristic vsyio."
+    # def __del__(self):
+    #     print("Heuristic vsyio.")
