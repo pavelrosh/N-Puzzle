@@ -4,6 +4,7 @@ from generator import make_goal, make_puzzle
 from termcolor import colored
 from copy import deepcopy
 from heuristic import Heuristic
+from is_solvable import is_solvable
 
 
 class NPuzzleSearch:
@@ -70,10 +71,6 @@ class NPuzzleSearch:
         # print("AFTER", empty_till)
         return coordinates, empty_till
 
-    @staticmethod
-    def is_solvable(source):
-        return True
-
     def generate_children(self, current_node):
         """
         Generate children nodes of current node.
@@ -139,9 +136,8 @@ class ASearch(NPuzzleSearch):
         self.open_list = [self.initial_node]
         self.closed_list = []
 
+
     def solver(self):
-        # self.print_puzzle(self.initial_node)
-        # self.print_puzzle(self.final_node)
         current_node = deepcopy(self.initial_node)
 
         while not self.final_state_reached(current_node):
@@ -174,4 +170,8 @@ if __name__ == "__main__":
         exit(1)
 
     a_search = ASearch(size=int(sys.argv[-1]))
-    a_search.solver()
+    if is_solvable(puzzle=a_search.final_node['puzzle'], size=a_search.size):
+        print("Puzzle is SOLVABLE!")
+        a_search.solver()
+    else:
+        print("Puzzle isn't SOLVABLE!")
