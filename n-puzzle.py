@@ -5,7 +5,7 @@ from termcolor import colored
 from copy import deepcopy
 from heuristic import Heuristic
 from is_solvable import is_solvable
-
+from time import time
 
 class NPuzzleSearch:
     @staticmethod
@@ -81,11 +81,12 @@ class NPuzzleSearch:
         node = deepcopy(current_node)
         swap_coordinates, empty_till = self.get_coordinate_of_empty_till(current_node)
         # print(swap_coordinates, empty_till)
+        # print(f'PARENT: {node}')
         for coord in swap_coordinates:
             # print(empty_till, coord)
             tmp = self.swap_tiles(swap_from=empty_till, swap_to=coord, node=node)
-            print(tmp)
             tmp.g = node.g + 1
+            # print(f'CHILD {tmp}')
             self.open_list.append(tmp)
 
     def choose_next_node(self):
@@ -102,19 +103,15 @@ class NPuzzleSearch:
             node.f = node.g + h_score
 
         # sort list of node by f-score, from higher to lower.
-        self.open_list.sort(key=lambda x: x.f)
-        print(self.open_list)
-        # if there maximum f-score return node, else return list of nodes with highest f-score.
-        if self.open_list[0].f == self.open_list[1].f:
-            list_of_equal_nodes = [node for node in self.open_list if node.f == self.open_list[0].f]
-            print(f"LIST: {list_of_equal_nodes}")
-            return list_of_equal_nodes
+        max_g = max([node.g for node in self.open_list])
+        list_of_equal_nodes = [node for node in self.open_list if node.g == max_g]
+        list_of_equal_nodes.sort(key=lambda x: x.f)
+        if len(list_of_equal_nodes) > 1 and list_of_equal_nodes[0].f == list_of_equal_nodes[1].f:
+            return [node for node in list_of_equal_nodes if node.f == list_of_equal_nodes[0].f]
         else:
-            print("NE LIST")
-            return self.open_list[0]
+            return list_of_equal_nodes[0]
 
     def is_goal(self, current_node):
-        # if type(current_node) is not list:
         return True if type(current_node) is not list and current_node == self.final_node else False
 
     def check_open_list(self):
@@ -126,6 +123,7 @@ class NPuzzleSearch:
                 self.open_list.remove(node)
 
     def print_puzzle(self, node, color='yellow'):
+        print(f"f-score: {node.f}\tg-score: {node.g}")
         print(colored('*' * self.size * 4, 'red'))
         for i in node.puzzle:
             print(colored(("{:^4}" * self.size).format(*i), color))
@@ -134,21 +132,21 @@ class NPuzzleSearch:
 
 class ASearch(NPuzzleSearch):
     def __init__(self, size):
-        """
-        Format of node: {"puzzle": [[1,2,3],[1,2,3],[1,2,3]], "f_score": 8}
-        """
         self.size = size
         self.final_node = self.generate_final_state(size=size)
         self.open_list = []
         self.closed_list = []
-        # self.current_node = self.generate_initial_state(size=self.size)
-        self.current_node = Node(puzzle=[[0, 2, 3], [1,4,5], [8,7,6]])
+        self.current_node = self.generate_initial_state(size=self.size)
+        # self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])
+        # self.current_node = Node(puzzle=[[0, 2, 3], [1, 4, 5], [8, 7, 6]])
         self.open_list = [self.current_node]
+        self.start = 0
 
     def solver(self):
+        self.start = time()
         while not self.is_goal(self.current_node):
             if type(self.current_node) is list:
-                print("MANY CHILD WITH EQUAL f-score")
+                # print("MULTIPLE CHILD")
                 """
                 Check if there more than one child nodes with equal h-score.
                 """
@@ -158,32 +156,28 @@ class ASearch(NPuzzleSearch):
                         print("SUCCESS")
                         exit()
                     else:
-                        # print(f"LEN of nodes list: {list_of_equal_nodes}")
-                        self.print_puzzle(node=node)
+                        # self.print_puzzle(node=node)
                         self.generate_children(current_node=node)
-                        # print("OPEN LIST", self.open_list)
                         self.closed_list.append(node)
                         # print("CLOSED LIST", self.closed_list)
                         self.check_open_list()
-                        # print("OPEN LIST AFTER REMOVING", self.open_list)
+                        # print()
                 self.current_node = self.choose_next_node()
-                print(self.current_node)
+                # print(f"NEW CURRENT NODES: {self.current_node}")
             else:
-                print("SINGLE CHILD")
-                self.print_puzzle(node=self.current_node)
+                # print("SINGLE CHILD")
+                # self.print_puzzle(node=self.current_node)
                 self.generate_children(current_node=self.current_node)
                 # print(f"OPEN LIST: {self.open_list}")
                 self.closed_list.append(self.current_node)
                 # print(f"CLOSED_LIST: {self.closed_list}")
                 self.check_open_list()
-                # print("OPEN LIST", self.open_list)
-                # print(self.open_list)
                 self.current_node = self.choose_next_node()
         else:
             print("FINAL STATE REACHED!")
 
     def __del__(self):
-        print("Good By")
+        print(f"Calculation time {time() - self.start}")
 
 
 if __name__ == "__main__":
@@ -198,9 +192,11 @@ if __name__ == "__main__":
         exit(1)
 
     a_search = ASearch(size=int(sys.argv[-1]))
-    # init_puzzle = a_search.generate_initial_state(size=a_search.size)
-    # if is_solvable(puzzle=init_puzzle.puzzle, size=a_search.size):
-    #     print("Puzzle is SOLVABLE!")
-    a_search.solver()
-    # else:
-    #     print("Puzzle isn't SOLVABLE!")
+    if is_solvable(puzzle=a_search.current_node.puzzle, size=a_search.size):
+        print("Puzzle is SOLVABLE!")
+        try:
+            a_search.solver()
+        except KeyboardInterrupt:
+            print("Forced finished")
+    else:
+        print("Puzzle isn't SOLVABLE!")

@@ -11,7 +11,7 @@ def get_inversions(tiles, size):
 
 
 def if_odd(inversions):
-    print(f"INVERSIONS: {inversions}")
+    # print(f"INVERSIONS: {inversions}")
     return True if inversions % 2 != 0 else False
 
 
