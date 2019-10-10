@@ -105,13 +105,18 @@ if __name__ == "__main__":
 
 
 class Node:
-    def __init__(self, puzzle, parent=None, g=0, h=0, f=0):
+    instances = 0
+
+    def __init__(self, puzzle, g=0, h=0, f=0):
         self.puzzle = puzzle
-        self.parent = parent
         self.f = f
         self.g = g
         self.h = h
+        Node.instances += 1
 
     def __repr__(self): return f"< f-score={self.f}, puzzle: {self.puzzle}, g-score={self.g} >"
 
     def __eq__(self, other): return self.puzzle == other.puzzle
+
+    @staticmethod
+    def get_number_of_instances(): return Node.instances

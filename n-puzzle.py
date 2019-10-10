@@ -7,6 +7,7 @@ from heuristic import Heuristic
 from is_solvable import is_solvable
 from time import time
 
+
 class NPuzzleSearch:
     @staticmethod
     def make_matrix(source, size):
@@ -83,7 +84,6 @@ class NPuzzleSearch:
         # print(swap_coordinates, empty_till)
         # print(f'PARENT: {node}')
         for coord in swap_coordinates:
-            # print(empty_till, coord)
             tmp = self.swap_tiles(swap_from=empty_till, swap_to=coord, node=node)
             tmp.g = node.g + 1
             # print(f'CHILD {tmp}')
@@ -103,13 +103,20 @@ class NPuzzleSearch:
             node.f = node.g + h_score
 
         # sort list of node by f-score, from higher to lower.
-        max_g = max([node.g for node in self.open_list])
-        list_of_equal_nodes = [node for node in self.open_list if node.g == max_g]
+        # max_g = max([node.g for node in self.open_list])
+        # self.max_g = max_g if self.max_g < max_g else self.max_g
+        #
+        # list_of_equal_nodes = [node for node in self.open_list if node.g == max_g]
+        # print(self.open_list)
+        list_of_equal_nodes = deepcopy(self.open_list)
         list_of_equal_nodes.sort(key=lambda x: x.f)
+
         if len(list_of_equal_nodes) > 1 and list_of_equal_nodes[0].f == list_of_equal_nodes[1].f:
             return [node for node in list_of_equal_nodes if node.f == list_of_equal_nodes[0].f]
         else:
             return list_of_equal_nodes[0]
+        #
+        # return list_of_equal_nodes[0]
 
     def is_goal(self, current_node):
         return True if type(current_node) is not list and current_node == self.final_node else False
@@ -118,8 +125,22 @@ class NPuzzleSearch:
         """
         Remove explored nodes.
         """
+        # print(len(self.open_list))
+
+        # if not self.open_list:
+        #     print()
+        # print(len(self.open_list))
+
         for node in self.closed_list:
             if node in self.open_list:
+                self.open_list.remove(node)
+
+        if not self.open_list:
+            print()
+
+        max_g = max([node.g for node in self.open_list])
+        for node in self.open_list:
+            if node.g < max_g:
                 self.open_list.remove(node)
 
     def print_puzzle(self, node, color='yellow'):
@@ -137,10 +158,13 @@ class ASearch(NPuzzleSearch):
         self.open_list = []
         self.closed_list = []
         self.current_node = self.generate_initial_state(size=self.size)
-        # self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])
-        # self.current_node = Node(puzzle=[[0, 2, 3], [1, 4, 5], [8, 7, 6]])
+        # self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])  # 0.3 seconds
+        # self.current_node = Node(puzzle=[[0, 2, 3], [1, 4, 5], [8, 7, 6]])  # fast
+        # self.current_node = Node(puzzle=[[4, 8, 3], [2, 0, 5], [6, 1, 7]])  # isn't solvable
+        # self.current_node = Node(puzzle=[[2,13,4,3], [14,8,10,9], [12,0,1,5], [15,6,7,11]])  # 4x4 solvable
         self.open_list = [self.current_node]
         self.start = 0
+        self.max_g = 0
 
     def solver(self):
         self.start = time()
@@ -159,25 +183,22 @@ class ASearch(NPuzzleSearch):
                         # self.print_puzzle(node=node)
                         self.generate_children(current_node=node)
                         self.closed_list.append(node)
-                        # print("CLOSED LIST", self.closed_list)
                         self.check_open_list()
-                        # print()
                 self.current_node = self.choose_next_node()
-                # print(f"NEW CURRENT NODES: {self.current_node}")
             else:
-                # print("SINGLE CHILD")
                 # self.print_puzzle(node=self.current_node)
                 self.generate_children(current_node=self.current_node)
-                # print(f"OPEN LIST: {self.open_list}")
                 self.closed_list.append(self.current_node)
-                # print(f"CLOSED_LIST: {self.closed_list}")
                 self.check_open_list()
                 self.current_node = self.choose_next_node()
         else:
             print("FINAL STATE REACHED!")
 
     def __del__(self):
-        print(f"Calculation time {time() - self.start}")
+        print(f"Calculation time {round(time() - self.start, 1)}")
+        print(f"Time complexity: {len(self.open_list)}")
+        # print(f"Size complexity: {Node.get_number_of_instances()}")
+        print(f"Number of moves: {len(self.closed_list)}")
 
 
 if __name__ == "__main__":
