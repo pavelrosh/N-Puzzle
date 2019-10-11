@@ -1,4 +1,5 @@
 from numpy import array, where
+from math import sqrt
 
 
 class Heuristic:
@@ -36,7 +37,6 @@ class Heuristic:
         return h_score
 
     def euclidean(self):
-        from math import sqrt
         h = 0
         for x in range(self.size):
             for y in range(self.size):

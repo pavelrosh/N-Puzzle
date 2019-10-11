@@ -9,6 +9,26 @@ from time import time
 
 
 class NPuzzleSearch:
+    def __init__(self, size):
+        self.open_list = []
+        self.closed_list = []
+        self.size = size
+        self.nodes_in_open_list = len(self.open_list)
+        self.number_of_nodes = 0
+        self.final_node = self.generate_final_state(size=size)
+        # self.current_node = self.generate_initial_state(size=size)
+        self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])  # 0.3
+        # self.current_node = Node(puzzle=[[0, 2, 3], [1, 4, 5], [8, 7, 6]])  # speed of light
+        # self.current_node = Node(puzzle=[[4, 8, 3], [2, 0, 5], [6, 1, 7]])  # isn't solvable
+        # self.current_node = Node(puzzle=[[2,13,4,3], [14,8,10,9], [12,0,1,5], [15,6,7,11]])  # 4x4 solvable,
+                                                                                             # 9.2 - manhatten,
+                                                                                             # 7.2 - euclidian
+        self.open_list = [self.current_node]
+
+        self.max_g = 0
+        self.max_nodes_in_same_time = 1
+        self.start_time = time()
+
     @staticmethod
     def make_matrix(source, size):
         matrix = []
@@ -86,6 +106,10 @@ class NPuzzleSearch:
             tmp = self.swap_tiles(swap_from=empty_till, swap_to=coord, node=node)
             tmp.g = node.g + 1
             self.open_list.append(tmp)
+            self.nodes_in_open_list += 1
+
+        self.max_nodes_in_same_time = (len(self.open_list) if len(self.open_list) > self.max_nodes_in_same_time
+                                       else self.max_nodes_in_same_time)
 
     def choose_next_node(self):
         """
@@ -137,26 +161,18 @@ class NPuzzleSearch:
             print(colored(("{:^4}" * self.size).format(*i), color))
         print(colored('*' * self.size * 4, 'red'))
 
+    def __del__(self):
+        print(f"Calculation time: {round(time() - self.start_time, 1)} second(s)")
+        print(f"Number of moves: {len(self.closed_list)}")
+        print(f"Nodes appeared in open list(Complexity in time): {self.nodes_in_open_list}")
+        print(f"Maximum number of nodes in same time(Complexity in size): {self.max_nodes_in_same_time}")
+
 
 class ASearch(NPuzzleSearch):
     def __init__(self, size):
-        self.size = size
-        self.final_node = self.generate_final_state(size=size)
-        self.open_list = []
-        self.closed_list = []
-        # self.current_node = self.generate_initial_state(size=self.size)
-        # self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])  # 0.3
-        # self.current_node = Node(puzzle=[[0, 2, 3], [1, 4, 5], [8, 7, 6]])  # speed of light
-        # self.current_node = Node(puzzle=[[4, 8, 3], [2, 0, 5], [6, 1, 7]])  # isn't solvable
-        self.current_node = Node(puzzle=[[2,13,4,3], [14,8,10,9], [12,0,1,5], [15,6,7,11]])  # 4x4 solvable,
-                                                                                             # 9.2 - manhatten,
-                                                                                             # 7.2 - euclidian
-        self.open_list = [self.current_node]
-        self.start = 0
-        self.max_g = 0
+        super().__init__(size)
 
     def solver(self):
-        self.start = time()
         while not self.is_goal(self.current_node):
             if type(self.current_node) is list:
                 """
@@ -179,12 +195,6 @@ class ASearch(NPuzzleSearch):
                 self.current_node = self.choose_next_node()
         else:
             print("FINAL STATE REACHED!")
-
-    def __del__(self):
-        print(f"Calculation time {round(time() - self.start, 1)}")
-        # print(f"Time complexity: {len(self.open_list)}")
-        # print(f"Size complexity: {Node.get_number_of_instances()}")
-        print(f"Number of moves: {len(self.closed_list)}")
 
 
 if __name__ == "__main__":
