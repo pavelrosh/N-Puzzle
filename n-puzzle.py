@@ -81,12 +81,10 @@ class NPuzzleSearch:
         """
         node = deepcopy(current_node)
         swap_coordinates, empty_till = self.get_coordinate_of_empty_till(current_node)
-        # print(swap_coordinates, empty_till)
-        # print(f'PARENT: {node}')
+
         for coord in swap_coordinates:
             tmp = self.swap_tiles(swap_from=empty_till, swap_to=coord, node=node)
             tmp.g = node.g + 1
-            # print(f'CHILD {tmp}')
             self.open_list.append(tmp)
 
     def choose_next_node(self):
@@ -98,16 +96,15 @@ class NPuzzleSearch:
 
         for node in self.open_list:
             heuristic = Heuristic(current_node=deepcopy(node), final_node=deepcopy(self.final_node))
-            h_score = heuristic.misplaced()
+            # h_score = heuristic.misplaced()
+            # h_score = heuristic.manhatten()
+            h_score = heuristic.euclidean()
+            # h_score = heuristic.euclidean_squared()
             node.h = h_score
+            # print(h_score)
             node.f = node.g + h_score
 
         # sort list of node by f-score, from higher to lower.
-        # max_g = max([node.g for node in self.open_list])
-        # self.max_g = max_g if self.max_g < max_g else self.max_g
-        #
-        # list_of_equal_nodes = [node for node in self.open_list if node.g == max_g]
-        # print(self.open_list)
         list_of_equal_nodes = deepcopy(self.open_list)
         list_of_equal_nodes.sort(key=lambda x: x.f)
 
@@ -115,8 +112,6 @@ class NPuzzleSearch:
             return [node for node in list_of_equal_nodes if node.f == list_of_equal_nodes[0].f]
         else:
             return list_of_equal_nodes[0]
-        #
-        # return list_of_equal_nodes[0]
 
     def is_goal(self, current_node):
         return True if type(current_node) is not list and current_node == self.final_node else False
@@ -125,19 +120,11 @@ class NPuzzleSearch:
         """
         Remove explored nodes.
         """
-        # print(len(self.open_list))
-
-        # if not self.open_list:
-        #     print()
-        # print(len(self.open_list))
-
         for node in self.closed_list:
             if node in self.open_list:
                 self.open_list.remove(node)
 
-        if not self.open_list:
-            print()
-
+        # TODO some bug occurred below, probably need to check.
         max_g = max([node.g for node in self.open_list])
         for node in self.open_list:
             if node.g < max_g:
@@ -157,11 +144,13 @@ class ASearch(NPuzzleSearch):
         self.final_node = self.generate_final_state(size=size)
         self.open_list = []
         self.closed_list = []
-        self.current_node = self.generate_initial_state(size=self.size)
-        # self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])  # 0.3 seconds
-        # self.current_node = Node(puzzle=[[0, 2, 3], [1, 4, 5], [8, 7, 6]])  # fast
+        # self.current_node = self.generate_initial_state(size=self.size)
+        # self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])  # 0.3
+        # self.current_node = Node(puzzle=[[0, 2, 3], [1, 4, 5], [8, 7, 6]])  # speed of light
         # self.current_node = Node(puzzle=[[4, 8, 3], [2, 0, 5], [6, 1, 7]])  # isn't solvable
-        # self.current_node = Node(puzzle=[[2,13,4,3], [14,8,10,9], [12,0,1,5], [15,6,7,11]])  # 4x4 solvable
+        self.current_node = Node(puzzle=[[2,13,4,3], [14,8,10,9], [12,0,1,5], [15,6,7,11]])  # 4x4 solvable,
+                                                                                             # 9.2 - manhatten,
+                                                                                             # 7.2 - euclidian
         self.open_list = [self.current_node]
         self.start = 0
         self.max_g = 0
@@ -170,7 +159,6 @@ class ASearch(NPuzzleSearch):
         self.start = time()
         while not self.is_goal(self.current_node):
             if type(self.current_node) is list:
-                # print("MULTIPLE CHILD")
                 """
                 Check if there more than one child nodes with equal h-score.
                 """
@@ -180,13 +168,11 @@ class ASearch(NPuzzleSearch):
                         print("SUCCESS")
                         exit()
                     else:
-                        # self.print_puzzle(node=node)
                         self.generate_children(current_node=node)
                         self.closed_list.append(node)
                         self.check_open_list()
                 self.current_node = self.choose_next_node()
             else:
-                # self.print_puzzle(node=self.current_node)
                 self.generate_children(current_node=self.current_node)
                 self.closed_list.append(self.current_node)
                 self.check_open_list()
@@ -196,7 +182,7 @@ class ASearch(NPuzzleSearch):
 
     def __del__(self):
         print(f"Calculation time {round(time() - self.start, 1)}")
-        print(f"Time complexity: {len(self.open_list)}")
+        # print(f"Time complexity: {len(self.open_list)}")
         # print(f"Size complexity: {Node.get_number_of_instances()}")
         print(f"Number of moves: {len(self.closed_list)}")
 
