@@ -17,16 +17,21 @@ class NPuzzleSearch:
         self.number_of_nodes = 0
         self.final_node = self.generate_final_state(size=size)
         # self.current_node = self.generate_initial_state(size=size)
-        self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])  # 0.3
+        # [[7, 1, 2], [8, 0, 4], [5, 6, 3]]
+        # self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])  # 0.3
+        self.current_node = Node(puzzle=[[0, 2, 3], [1, 4, 5], [8, 7, 6]])  # 0.3
         # self.current_node = Node(puzzle=[[0, 2, 3], [1, 4, 5], [8, 7, 6]])  # speed of light
         # self.current_node = Node(puzzle=[[4, 8, 3], [2, 0, 5], [6, 1, 7]])  # isn't solvable
+        # self.current_node = Node(puzzle=[[7, 1, 2], [8, 0, 4], [5, 6, 3]])  # weird behavior, too long calculations
         # self.current_node = Node(puzzle=[[2,13,4,3], [14,8,10,9], [12,0,1,5], [15,6,7,11]])  # 4x4 solvable,
                                                                                              # 9.2 - manhatten,
                                                                                              # 7.2 - euclidian
+        print(self.current_node)
         self.open_list = [self.current_node]
 
         self.max_g = 0
         self.max_nodes_in_same_time = 1
+        self.solution_history = [deepcopy(self.current_node)]
         self.start_time = time()
 
     @staticmethod
@@ -111,6 +116,8 @@ class NPuzzleSearch:
         self.max_nodes_in_same_time = (len(self.open_list) if len(self.open_list) > self.max_nodes_in_same_time
                                        else self.max_nodes_in_same_time)
 
+    def get_f_score(self, h_score, node): pass
+
     def choose_next_node(self):
         """
         Calculate f(x) for each new generated node from open_list.
@@ -120,13 +127,14 @@ class NPuzzleSearch:
 
         for node in self.open_list:
             heuristic = Heuristic(current_node=deepcopy(node), final_node=deepcopy(self.final_node))
-            # h_score = heuristic.misplaced()
+            h_score = heuristic.misplaced()
             # h_score = heuristic.manhatten()
-            h_score = heuristic.euclidean()
+            # h_score = heuristic.euclidean()
             # h_score = heuristic.euclidean_squared()
             node.h = h_score
             # print(h_score)
-            node.f = node.g + h_score
+            node.f = self.get_f_score(h_score, node)
+            print(node.f, h_score)
 
         # sort list of node by f-score, from higher to lower.
         list_of_equal_nodes = deepcopy(self.open_list)
@@ -135,6 +143,7 @@ class NPuzzleSearch:
         if len(list_of_equal_nodes) > 1 and list_of_equal_nodes[0].f == list_of_equal_nodes[1].f:
             return [node for node in list_of_equal_nodes if node.f == list_of_equal_nodes[0].f]
         else:
+            self.solution_history.append(deepcopy(list_of_equal_nodes[0]))
             return list_of_equal_nodes[0]
 
     def is_goal(self, current_node):
@@ -155,22 +164,20 @@ class NPuzzleSearch:
                 self.open_list.remove(node)
 
     def print_puzzle(self, node, color='yellow'):
-        print(f"f-score: {node.f}\tg-score: {node.g}")
-        print(colored('*' * self.size * 4, 'red'))
+        # print(f"f-score: {node.f}\tg-score: {node.g}")
+        # print(colored('*' * self.size * 4, 'red'))
         for i in node.puzzle:
             print(colored(("{:^4}" * self.size).format(*i), color))
         print(colored('*' * self.size * 4, 'red'))
 
-    def __del__(self):
+    def print_metrics(self):
         print(f"Calculation time: {round(time() - self.start_time, 1)} second(s)")
         print(f"Number of moves: {len(self.closed_list)}")
         print(f"Nodes appeared in open list(Complexity in time): {self.nodes_in_open_list}")
         print(f"Maximum number of nodes in same time(Complexity in size): {self.max_nodes_in_same_time}")
-
-
-class ASearch(NPuzzleSearch):
-    def __init__(self, size):
-        super().__init__(size)
+        print(f"Solution history:")
+        for i in self.solution_history:
+            self.print_puzzle(i)
 
     def solver(self):
         while not self.is_goal(self.current_node):
@@ -181,7 +188,9 @@ class ASearch(NPuzzleSearch):
                 list_of_equal_nodes = deepcopy(self.current_node)
                 for node in list_of_equal_nodes:
                     if self.is_goal(node):
+                        self.solution_history.append(node)
                         print("SUCCESS")
+                        self.print_metrics()
                         exit()
                     else:
                         self.generate_children(current_node=node)
@@ -195,6 +204,21 @@ class ASearch(NPuzzleSearch):
                 self.current_node = self.choose_next_node()
         else:
             print("FINAL STATE REACHED!")
+            self.print_metrics()
+
+
+class AStar(NPuzzleSearch):
+    def __init__(self, size):
+        super().__init__(size)
+
+    def get_f_score(self, h_score, node): return node.g + h_score
+
+
+class Greedy(NPuzzleSearch):
+    def __init__(self, size):
+        super().__init__(size)
+
+    def get_f_score(self, h_score, node): return h_score
 
 
 if __name__ == "__main__":
@@ -208,7 +232,8 @@ if __name__ == "__main__":
         print("Wrong number of parameters!")
         exit(1)
 
-    a_search = ASearch(size=int(sys.argv[-1]))
+    a_search = AStar(size=int(sys.argv[-1]))
+    # a_search = Greedy(size=int(sys.argv[-1]))
     if is_solvable(puzzle=a_search.current_node.puzzle, size=a_search.size):
         print("Puzzle is SOLVABLE!")
         try:
