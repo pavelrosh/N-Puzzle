@@ -3,10 +3,11 @@ from math import sqrt
 
 
 class Heuristic:
-    def __init__(self, current_node, final_node):
+    def __init__(self, current_node, final_node, heuristic):
         self.current_node = current_node
         self.final_node = final_node
         self.size = len(current_node.puzzle)
+        self.heuristic = heuristic
 
     def misplaced(self):
         current = [y for x in self.current_node.puzzle for y in x]
@@ -55,3 +56,11 @@ class Heuristic:
     #             dx, dy = abs(x_goal - x), abs(y_goal - y)
     #             h += (dx * dx + dy * dy)
     #     return h
+
+    def calculate(self):
+        if self.heuristic == 'misplaced':
+            return self.misplaced()
+        elif self.heuristic == 'manhatten':
+            return self.manhatten()
+        elif self.heuristic == 'euclidian':
+            return self.euclidean()

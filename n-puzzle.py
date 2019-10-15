@@ -1,23 +1,24 @@
 #! /usr/bin/python
-import sys
 from generator import make_goal, make_puzzle, Node
 from termcolor import colored
 from copy import deepcopy
 from heuristic import Heuristic
 from is_solvable import is_solvable
 from time import time
+import argparse
+from parse_input_file import parse
 
 
 class NPuzzleSearch:
-    def __init__(self, size):
+    def __init__(self, size, heuristic, filename, print_output):
         self.open_list = []
         self.closed_list = []
         self.size = size
         self.nodes_in_open_list = len(self.open_list)
         self.number_of_nodes = 0
         self.final_node = self.generate_final_state(size=size)
-        # self.current_node = self.generate_initial_state(size=size)
-        self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])  # 0.3
+        self.current_node = self.generate_initial_state(size=size, filename=filename)
+        # self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])  # 0.3
         # self.current_node = Node(puzzle=[[0, 2, 3], [1, 4, 5], [8, 7, 6]])  # speed of light
         # self.current_node = Node(puzzle=[[4, 8, 3], [2, 0, 5], [6, 1, 7]])  # isn't solvable
         # self.current_node = Node(puzzle=[[7, 1, 2], [8, 0, 4], [5, 6, 3]])  # weird behavior, too long calculations
@@ -30,6 +31,8 @@ class NPuzzleSearch:
         self.max_g = 0
         self.max_nodes_in_same_time = 1
         self.solution_history = [deepcopy(self.current_node)]
+        self.heuristic = heuristic
+        self.print_output = print_output
         self.start_time = time()
 
     @staticmethod
@@ -42,9 +45,12 @@ class NPuzzleSearch:
 
         return matrix
 
-    def generate_initial_state(self, size):
-        source = make_puzzle(size, solvable=True, iterations=10000)
-        matrix = self.make_matrix(source=source, size=size)
+    def generate_initial_state(self, filename, size):
+        if not filename:
+            source = make_puzzle(size, solvable=True, iterations=10000)
+            matrix = self.make_matrix(source=source, size=size)
+        else:
+            matrix = parse(filename)
         return Node(puzzle=matrix)
 
     def generate_final_state(self, size):
@@ -68,31 +74,23 @@ class NPuzzleSearch:
             if 0 in node.puzzle[row]:
                 empty_till = [row, node.puzzle[row].index(0)]
 
-        # print("BEFORE", empty_till)
         row = empty_till[0] + 1
         if self.size - row == self.size - 1:
-            # print('down')
             coordinates.append((empty_till[0] + 1, empty_till[1]))
         elif self.size - row > 0:
-            # print("up&down")
             coordinates.append((empty_till[0] + 1, empty_till[1]))
             coordinates.append((empty_till[0] - 1, empty_till[1]))
         elif self.size - row == 0:
-            # print('up')
             coordinates.append((empty_till[0] - 1, empty_till[1]))
 
         element = empty_till[1] + 1
         if self.size - element == self.size - 1:
-            # print('right')
             coordinates.append((empty_till[0], empty_till[1] + 1))
         elif self.size - element > 0:
-            # print('left&right')
             coordinates.append((empty_till[0], empty_till[1] + 1))
             coordinates.append((empty_till[0], empty_till[1] - 1))
         elif self.size - element == 0:
-            # print('left')
             coordinates.append((empty_till[0], empty_till[1] - 1))
-        # print("AFTER", empty_till)
         return coordinates, empty_till
 
     def generate_children(self, current_node):
@@ -124,11 +122,9 @@ class NPuzzleSearch:
         """
 
         for node in self.open_list:
-            heuristic = Heuristic(current_node=deepcopy(node), final_node=deepcopy(self.final_node))
-            # h_score = heuristic.misplaced()
-            # h_score = heuristic.manhatten()
-            h_score = heuristic.euclidean()
-            # h_score = heuristic.euclidean_squared()
+            heuristic = Heuristic(current_node=deepcopy(node), final_node=deepcopy(self.final_node),
+                                  heuristic=self.heuristic)
+            h_score = heuristic.calculate()
             node.h = h_score
             # print(h_score)
             node.f = self.get_f_score(h_score, node)
@@ -156,9 +152,9 @@ class NPuzzleSearch:
                 self.open_list.remove(node)
 
         # TODO some bug occurred below, probably need to check.
-        max_g = max([node.g for node in self.open_list])
+        self.max_g = max([node.g for node in self.open_list])
         for node in self.open_list:
-            if node.g < max_g:
+            if node.g < self.max_g:
                 self.open_list.remove(node)
 
     def print_puzzle(self, node, color='yellow'):
@@ -171,11 +167,13 @@ class NPuzzleSearch:
     def print_metrics(self):
         print(f"Calculation time: {round(time() - self.start_time, 1)} second(s)")
         print(f"Number of moves: {len(self.closed_list)}")
+        print(len(self.solution_history))
         print(f"Nodes appeared in open list(Complexity in time): {self.nodes_in_open_list}")
         print(f"Maximum number of nodes in same time(Complexity in size): {self.max_nodes_in_same_time}")
-        # print(f"Solution history:")
-        # for i in self.solution_history:
-        #     self.print_puzzle(i)
+        if self.print_output:
+            print(f"Solution history:")
+            for i in self.solution_history:
+                self.print_puzzle(i)
 
     def solver(self):
         while not self.is_goal(self.current_node):
@@ -206,45 +204,68 @@ class NPuzzleSearch:
 
 
 class AStar(NPuzzleSearch):
-    def __init__(self, size):
-        super().__init__(size)
+    def __init__(self, size, heuristic, filename, print_output):
+        super().__init__(size, heuristic, filename, print_output)
+        print(f'Algorithm: {self.__class__.__name__}')
+        print(f'Heuristic: {heuristic}')
 
     def get_f_score(self, h_score, node): return node.g + h_score
 
 
 class Greedy(NPuzzleSearch):
-    def __init__(self, size):
-        super().__init__(size)
+    def __init__(self, size, heuristic, filename, print_output):
+        super().__init__(size, heuristic, filename, print_output)
+        print(f'Algorithm: {self.__class__.__name__}')
+        print(f'Heuristic: {heuristic}')
 
     def get_f_score(self, h_score, node): return h_score
 
 
 class Uniform(NPuzzleSearch):
-    def __init__(self, size):
-        super().__init__(size)
+    def __init__(self, size, heuristic, filename, print_output):
+        super().__init__(size, heuristic, filename, print_output)
+        print(f'Algorithm: {self.__class__.__name__}')
 
     def get_f_score(self, h_score, node): return node.g
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        try:
-            assert int(sys.argv[-1]) > 2
-        except:
-            print("Size of puzzle must be more than 3")
-            exit(1)
-    else:
-        print("Wrong number of parameters!")
-        exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("size", type=int, help="Size of the puzzle's side. Must be >3.", default=3)
+    parser.add_argument("--heuristic", type=str, help="Choose your heuristic function(mispaced, manhatten, euclidian)"
+                        , default='manhatten')
+    parser.add_argument('-g', "--generator", action='store_true')
+    parser.add_argument('-f', '--file', type=str)
+    parser.add_argument('-a', '--algorithm', default='a', help="Choose between a, greedy, uniform")
+    parser.add_argument('-p', '--print', action='store_true')
+    args = parser.parse_args()
 
-    # a_search = AStar(size=int(sys.argv[-1]))
-    # a_search = Greedy(size=int(sys.argv[-1]))
-    a_search = Uniform(size=int(sys.argv[-1]))
-    if is_solvable(puzzle=a_search.current_node.puzzle, size=a_search.size):
-        print("Puzzle is SOLVABLE!")
-        try:
-            a_search.solver()
-        except KeyboardInterrupt:
-            print("Forced finished")
+    if args.size > 2:
+        if not args.generator:
+            if args.file:
+                filename = args.file
+            else:
+                filename = None
+        else:
+            filename = None
+        print_output = args.print
+        if args.algorithm == 'a':
+            algorithm = AStar(size=args.size, heuristic=args.heuristic, filename=filename, print_output=print_output)
+        elif args.algorithm == 'greedy':
+            algorithm = Greedy(size=args.size, heuristic=args.heuristic, filename=filename, print_output=print_output)
+        elif args.algorithm == 'uniform':
+            algorithm = Uniform(size=args.size, heuristic=args.heuristic, filename=filename, print_output=print_output)
+        else:
+            print("Wrong algorithm name!")
+            exit()
+
+        if is_solvable(puzzle=algorithm.current_node.puzzle, size=algorithm.size):
+            print("Puzzle is SOLVABLE!")
+            try:
+                algorithm.solver()
+            except KeyboardInterrupt:
+                print("Aborted manually")
+        else:
+            print("Puzzle isn't SOLVABLE!")
     else:
-        print("Puzzle isn't SOLVABLE!")
+        print("wring size of puzzle!")
