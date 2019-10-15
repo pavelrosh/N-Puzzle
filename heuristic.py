@@ -31,9 +31,10 @@ class Heuristic:
 
         for x in range(self.size):
             for y in range(self.size):
-                x_goal, y_goal = self.get_coordinates(puzzle=self.final_node.puzzle, item=self.current_node.puzzle[x][y])
-                dx, dy = abs(x_goal - x), abs(y_goal - y)
-                h_score += dx + dy
+                if self.current_node.puzzle[x][y] != 0:
+                    x_goal, y_goal = self.get_coordinates(puzzle=self.final_node.puzzle, item=self.current_node.puzzle[x][y])
+                    dx, dy = abs(x_goal - x), abs(y_goal - y)
+                    h_score += dx + dy
 
         return h_score
 
@@ -41,10 +42,10 @@ class Heuristic:
         h = 0
         for x in range(self.size):
             for y in range(self.size):
-                x_goal, y_goal = self.get_coordinates(puzzle=self.final_node.puzzle, item=self.current_node.puzzle[x][y])
-                dx, dy = abs(x_goal - x), abs(y_goal - y)
-                h += sqrt(dx * dx + dy * dy)
-
+                if self.current_node.puzzle[x][y] != 0:
+                    x_goal, y_goal = self.get_coordinates(puzzle=self.final_node.puzzle, item=self.current_node.puzzle[x][y])
+                    dx, dy = abs(x_goal - x), abs(y_goal - y)
+                    h += sqrt(dx * dx + dy * dy)
         return h
 
     # def euclidean_squared(self):
@@ -64,3 +65,23 @@ class Heuristic:
             return self.manhatten()
         elif self.heuristic == 'euclidian':
             return self.euclidean()
+
+
+# if __name__ == "__main__":
+#     h_score = 0
+#     final_node = [[1, 2, 3],
+#                   [8, 0, 4],
+#                   [7, 6, 5]]
+#     current_node = [[1, 2, 3],
+#                     [8, 4, 5],
+#                     [0, 7, 6]]
+#     for x in range(3):
+#         for y in range(3):
+#             if current_node[x][y] != 0:
+#                 x_goal, y_goal = Heuristic.get_coordinates(puzzle=final_node,
+#                                                            item=current_node[x][y])
+#                 dx, dy = abs(x_goal - x), abs(y_goal - y)
+#                 print(current_node[x][y], dx + dy)
+#                 h_score += dx + dy
+#
+#     print(h_score)

@@ -112,6 +112,7 @@ class Node:
         self.f = f
         self.g = g
         self.h = h
+        self.parent = None
         Node.instances += 1
 
     def __repr__(self): return f"< f-score={self.f}, puzzle: {self.puzzle}, g-score={self.g} >"

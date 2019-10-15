@@ -17,8 +17,8 @@ class NPuzzleSearch:
         self.nodes_in_open_list = len(self.open_list)
         self.number_of_nodes = 0
         self.final_node = self.generate_final_state(size=size)
-        self.current_node = self.generate_initial_state(size=size, filename=filename)
-        # self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])  # 0.3
+        # self.current_node = self.generate_initial_state(size=size, filename=filename)
+        self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])  # 0.3
         # self.current_node = Node(puzzle=[[0, 2, 3], [1, 4, 5], [8, 7, 6]])  # speed of light
         # self.current_node = Node(puzzle=[[4, 8, 3], [2, 0, 5], [6, 1, 7]])  # isn't solvable
         # self.current_node = Node(puzzle=[[7, 1, 2], [8, 0, 4], [5, 6, 3]])  # weird behavior, too long calculations
@@ -106,6 +106,7 @@ class NPuzzleSearch:
         for coord in swap_coordinates:
             tmp = self.swap_tiles(swap_from=empty_till, swap_to=coord, node=node)
             tmp.g = node.g + 1
+            tmp.parent = current_node
             self.open_list.append(tmp)
             self.nodes_in_open_list += 1
 
@@ -135,7 +136,11 @@ class NPuzzleSearch:
         list_of_equal_nodes.sort(key=lambda x: x.f)
 
         if len(list_of_equal_nodes) > 1 and list_of_equal_nodes[0].f == list_of_equal_nodes[1].f:
-            return [node for node in list_of_equal_nodes if node.f == list_of_equal_nodes[0].f]
+            tmp = [node for node in list_of_equal_nodes if node.f == list_of_equal_nodes[0].f]
+            # for i in tmp:
+            #     print(i)
+            # self.solution_history.append(tmp)
+            return tmp
         else:
             self.solution_history.append(deepcopy(list_of_equal_nodes[0]))
             return list_of_equal_nodes[0]
@@ -158,22 +163,32 @@ class NPuzzleSearch:
                 self.open_list.remove(node)
 
     def print_puzzle(self, node, color='yellow'):
-        # print(f"f-score: {node.f}\tg-score: {node.g}")
+        print(f"g-score: {node.g}\tf-score: {node.f}")
         # print(colored('*' * self.size * 4, 'red'))
+        # if
         for i in node.puzzle:
             print(colored(("{:^4}" * self.size).format(*i), color))
         print(colored('*' * self.size * 4, 'red'))
 
     def print_metrics(self):
-        print(f"Calculation time: {round(time() - self.start_time, 1)} second(s)")
-        print(f"Number of moves: {len(self.closed_list)}")
-        print(len(self.solution_history))
-        print(f"Nodes appeared in open list(Complexity in time): {self.nodes_in_open_list}")
-        print(f"Maximum number of nodes in same time(Complexity in size): {self.max_nodes_in_same_time}")
+        print(colored("calculation time:", 'yellow'), colored(str(round(time() - self.start_time, 1)) + " second(s)",
+                                                              'cyan'))
+        print(colored("number of steps:", 'yellow'), colored(self.max_g + 1, 'cyan'))
+        # print(colored("Nodes appeared in open list(Complexity in time):", 'yellow'), colored(self.nodes_in_open_list,
+        #                                                                                      'cyan'))
+        # print(colored("Maximum number of nodes in same time(Complexity in size):", 'yellow'),
+        #       colored(self.max_nodes_in_same_time, 'cyan'))
         if self.print_output:
             print(f"Solution history:")
-            for i in self.solution_history:
-                self.print_puzzle(i)
+            solution_way = [self.current_node]
+            node = self.current_node.parent
+            while node:
+                solution_way.append(node)
+                node = node.parent
+            i = len(solution_way) - 1
+            while i >= 0:
+                self.print_puzzle(solution_way[i])
+                i -= 1
 
     def solver(self):
         while not self.is_goal(self.current_node):
@@ -184,7 +199,6 @@ class NPuzzleSearch:
                 list_of_equal_nodes = deepcopy(self.current_node)
                 for node in list_of_equal_nodes:
                     if self.is_goal(node):
-                        self.solution_history.append(node)
                         print("SUCCESS")
                         self.print_metrics()
                         exit()
@@ -206,8 +220,10 @@ class NPuzzleSearch:
 class AStar(NPuzzleSearch):
     def __init__(self, size, heuristic, filename, print_output):
         super().__init__(size, heuristic, filename, print_output)
-        print(f'Algorithm: {self.__class__.__name__}')
-        print(f'Heuristic: {heuristic}')
+        print(colored('algorithm:', 'green', attrs=['bold', 'blink']), colored(self.__class__.__name__, 'blue',
+                                                                               attrs=['bold', 'blink']))
+        print(colored('heuristic:', 'green', attrs=['bold', 'blink']), colored(heuristic, 'blue',
+                                                                               attrs=['bold', 'blink']))
 
     def get_f_score(self, h_score, node): return node.g + h_score
 
@@ -215,8 +231,10 @@ class AStar(NPuzzleSearch):
 class Greedy(NPuzzleSearch):
     def __init__(self, size, heuristic, filename, print_output):
         super().__init__(size, heuristic, filename, print_output)
-        print(f'Algorithm: {self.__class__.__name__}')
-        print(f'Heuristic: {heuristic}')
+        print(colored('algorithm:', 'green', attrs=['bold', 'blink']), colored(self.__class__.__name__, 'blue',
+                                                                               attrs=['bold', 'blink']))
+        print(colored('heuristic:', 'green', attrs=['bold', 'blink']), colored(heuristic, 'blue',
+                                                                               attrs=['bold', 'blink']))
 
     def get_f_score(self, h_score, node): return h_score
 
@@ -224,7 +242,10 @@ class Greedy(NPuzzleSearch):
 class Uniform(NPuzzleSearch):
     def __init__(self, size, heuristic, filename, print_output):
         super().__init__(size, heuristic, filename, print_output)
-        print(f'Algorithm: {self.__class__.__name__}')
+        print(colored('algorithm:', 'green', attrs=['bold', 'blink']), colored(self.__class__.__name__, 'blue',
+                                                                               attrs=['bold', 'blink']))
+        print(colored('heuristic:', 'green', attrs=['bold', 'blink']), colored("Doesn't need", 'blue',
+                                                                               attrs=['bold', 'blink']))
 
     def get_f_score(self, h_score, node): return node.g
 
@@ -260,12 +281,12 @@ if __name__ == "__main__":
             exit()
 
         if is_solvable(puzzle=algorithm.current_node.puzzle, size=algorithm.size):
-            print("Puzzle is SOLVABLE!")
+            print(colored("solvable: ", 'blue', attrs=['bold', 'blink']), colored('YES', 'green', attrs=['bold', 'blink']))
             try:
                 algorithm.solver()
             except KeyboardInterrupt:
                 print("Aborted manually")
         else:
-            print("Puzzle isn't SOLVABLE!")
+            print(colored("solvable: ", 'blue'), colored('NO', 'red'))
     else:
         print("wring size of puzzle!")
