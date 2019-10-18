@@ -30,7 +30,6 @@ class NPuzzleSearch:
         self.open_list = [self.current_node]
 
         self.max_g = 0
-        self.max_nodes_in_same_time = 1
         self.solution_history = [deepcopy(self.current_node)]
         self.heuristic = heuristic
         self.print_output = print_output
@@ -110,9 +109,6 @@ class NPuzzleSearch:
             tmp.parent = current_node
             self.open_list.append(tmp)
             self.nodes_in_open_list += 1
-
-        self.max_nodes_in_same_time = (len(self.open_list) if len(self.open_list) > self.max_nodes_in_same_time
-                                       else self.max_nodes_in_same_time)
 
     def get_f_score(self, h_score, node): pass
 
