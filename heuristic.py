@@ -48,16 +48,6 @@ class Heuristic:
                     h += sqrt(dx * dx + dy * dy)
         return h
 
-    # def euclidean_squared(self):
-    #     from math import sqrt
-    #     h = 0
-    #     for x in range(self.size):
-    #         for y in range(self.size):
-    #             x_goal, y_goal = self.get_coordinates(puzzle=self.final_node.puzzle, item=self.current_node.puzzle[x][y])
-    #             dx, dy = abs(x_goal - x), abs(y_goal - y)
-    #             h += (dx * dx + dy * dy)
-    #     return h
-
     def calculate(self):
         if self.heuristic == 'misplaced':
             return self.misplaced()
@@ -65,7 +55,6 @@ class Heuristic:
             return self.manhatten()
         elif self.heuristic == 'euclidian':
             return self.euclidean()
-
 
 # if __name__ == "__main__":
 #     h_score = 0

@@ -17,10 +17,11 @@ class NPuzzleSearch:
         self.nodes_in_open_list = len(self.open_list)
         self.number_of_nodes = 0
         self.final_node = self.generate_final_state(size=size)
-        # self.current_node = self.generate_initial_state(size=size, filename=filename)
-        self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])  # 0.3
+        self.current_node = self.generate_initial_state(size=size, filename=filename)
+        # self.current_node = Node(puzzle=[[3, 2, 6], [7, 0, 8], [1, 5, 4]])  # 0.3
         # self.current_node = Node(puzzle=[[0, 2, 3], [1, 4, 5], [8, 7, 6]])  # speed of light
         # self.current_node = Node(puzzle=[[4, 8, 3], [2, 0, 5], [6, 1, 7]])  # isn't solvable
+        # self.current_node = Node(puzzle=[[1, 7, 8], [2, 0, 5], [3, 6, 4]]) # too long for misplaced
         # self.current_node = Node(puzzle=[[7, 1, 2], [8, 0, 4], [5, 6, 3]])  # weird behavior, too long calculations
         # self.current_node = Node(puzzle=[[2,13,4,3], [14,8,10,9], [12,0,1,5], [15,6,7,11]])  # 4x4 solvable,
                                                                                              # 9.2 - manhatten,
@@ -123,7 +124,7 @@ class NPuzzleSearch:
         """
 
         for node in self.open_list:
-            heuristic = Heuristic(current_node=deepcopy(node), final_node=deepcopy(self.final_node),
+            heuristic = Heuristic(current_node=node, final_node=self.final_node,
                                   heuristic=self.heuristic)
             h_score = heuristic.calculate()
             node.h = h_score
@@ -132,18 +133,13 @@ class NPuzzleSearch:
             # print(node.f, h_score)
 
         # sort list of node by f-score, from higher to lower.
-        list_of_equal_nodes = deepcopy(self.open_list)
-        list_of_equal_nodes.sort(key=lambda x: x.f)
+        self.open_list.sort(key=lambda x: x.f)
 
-        if len(list_of_equal_nodes) > 1 and list_of_equal_nodes[0].f == list_of_equal_nodes[1].f:
-            tmp = [node for node in list_of_equal_nodes if node.f == list_of_equal_nodes[0].f]
-            # for i in tmp:
-            #     print(i)
-            # self.solution_history.append(tmp)
-            return tmp
+        if len(self.open_list) > 1 and self.open_list[0].f == self.open_list[1].f:
+            return [node for node in self.open_list if node.f == self.open_list[0].f]
         else:
-            self.solution_history.append(deepcopy(list_of_equal_nodes[0]))
-            return list_of_equal_nodes[0]
+            self.solution_history.append(deepcopy(self.open_list[0]))
+            return self.open_list[0]
 
     def is_goal(self, current_node):
         return True if type(current_node) is not list and current_node == self.final_node else False
@@ -155,12 +151,15 @@ class NPuzzleSearch:
         for node in self.closed_list:
             if node in self.open_list:
                 self.open_list.remove(node)
-
-        # TODO some bug occurred below, probably need to check.
-        self.max_g = max([node.g for node in self.open_list])
-        for node in self.open_list:
-            if node.g < self.max_g:
-                self.open_list.remove(node)
+        if self.open_list:
+            self.max_g = max([node.g for node in self.open_list])
+            for node in self.open_list:
+                if node.g < self.max_g:
+                    self.open_list.remove(node)
+        else:
+            print(colored("solvable: ", 'blue', attrs=['bold', 'blink']),
+                  colored('NO', 'red', attrs=['bold', 'blink']))
+            exit()
 
     def print_puzzle(self, node, color='yellow'):
         print(f"g-score: {node.g}\tf-score: {node.f}")
@@ -171,13 +170,15 @@ class NPuzzleSearch:
         print(colored('*' * self.size * 4, 'red'))
 
     def print_metrics(self):
+        print(colored("solvable: ", 'blue', attrs=['bold', 'blink']), colored('YES', 'green', attrs=['bold', 'blink']))
         print(colored("calculation time:", 'yellow'), colored(str(round(time() - self.start_time, 1)) + " second(s)",
                                                               'cyan'))
         print(colored("number of steps:", 'yellow'), colored(self.max_g + 1, 'cyan'))
-        # print(colored("Nodes appeared in open list(Complexity in time):", 'yellow'), colored(self.nodes_in_open_list,
-        #                                                                                      'cyan'))
-        # print(colored("Maximum number of nodes in same time(Complexity in size):", 'yellow'),
-        #       colored(self.max_nodes_in_same_time, 'cyan'))
+        print(colored("nodes ever selected in the open list:", 'yellow'), colored(self.nodes_in_open_list,
+                                                                                             'cyan'))
+        print(colored("maximum number of states ever represented in memory at the same time during the search:",
+                      'yellow'),
+              colored(self.nodes_in_open_list + len(self.closed_list), 'cyan'))
         if self.print_output:
             print(f"Solution history:")
             solution_way = [self.current_node]
@@ -199,7 +200,6 @@ class NPuzzleSearch:
                 list_of_equal_nodes = deepcopy(self.current_node)
                 for node in list_of_equal_nodes:
                     if self.is_goal(node):
-                        print("SUCCESS")
                         self.print_metrics()
                         exit()
                     else:
@@ -213,17 +213,18 @@ class NPuzzleSearch:
                 self.check_open_list()
                 self.current_node = self.choose_next_node()
         else:
-            print("FINAL STATE REACHED!")
             self.print_metrics()
 
 
 class AStar(NPuzzleSearch):
     def __init__(self, size, heuristic, filename, print_output):
         super().__init__(size, heuristic, filename, print_output)
-        print(colored('algorithm:', 'green', attrs=['bold', 'blink']), colored(self.__class__.__name__, 'blue',
+        print(colored('algorithm:', 'green', attrs=['bold', 'blink']), colored("A*", 'blue',
                                                                                attrs=['bold', 'blink']))
         print(colored('heuristic:', 'green', attrs=['bold', 'blink']), colored(heuristic, 'blue',
                                                                                attrs=['bold', 'blink']))
+        print(colored('size: ', 'green', attrs=['bold', 'blink']), colored(size, 'blue',
+                                                                           attrs=['bold', 'blink']))
 
     def get_f_score(self, h_score, node): return node.g + h_score
 
@@ -235,6 +236,8 @@ class Greedy(NPuzzleSearch):
                                                                                attrs=['bold', 'blink']))
         print(colored('heuristic:', 'green', attrs=['bold', 'blink']), colored(heuristic, 'blue',
                                                                                attrs=['bold', 'blink']))
+        print(colored('size: ', 'green', attrs=['bold', 'blink']), colored(size, 'blue',
+                                                                           attrs=['bold', 'blink']))
 
     def get_f_score(self, h_score, node): return h_score
 
@@ -246,11 +249,13 @@ class Uniform(NPuzzleSearch):
                                                                                attrs=['bold', 'blink']))
         print(colored('heuristic:', 'green', attrs=['bold', 'blink']), colored("Doesn't need", 'blue',
                                                                                attrs=['bold', 'blink']))
+        print(colored('size: ', 'green', attrs=['bold', 'blink']), colored(size, 'blue',
+                                                                           attrs=['bold', 'blink']))
 
     def get_f_score(self, h_score, node): return node.g
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("size", type=int, help="Size of the puzzle's side. Must be >3.", default=3)
     parser.add_argument("--heuristic", type=str, help="Choose your heuristic function(mispaced, manhatten, euclidian)"
@@ -281,7 +286,7 @@ if __name__ == "__main__":
             exit()
 
         if is_solvable(puzzle=algorithm.current_node.puzzle, size=algorithm.size):
-            print(colored("solvable: ", 'blue', attrs=['bold', 'blink']), colored('YES', 'green', attrs=['bold', 'blink']))
+            # print(colored("solvable: ", 'blue', attrs=['bold', 'blink']), colored('YES', 'green', attrs=['bold', 'blink']))
             try:
                 algorithm.solver()
             except KeyboardInterrupt:
@@ -290,3 +295,7 @@ if __name__ == "__main__":
             print(colored("solvable: ", 'blue'), colored('NO', 'red'))
     else:
         print("wring size of puzzle!")
+
+
+if __name__ == "__main__":
+    main()
