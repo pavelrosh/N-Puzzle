@@ -1,12 +1,12 @@
-#! /usr/bin/python
-from generator import make_goal, make_puzzle, Node
-from termcolor import colored
-from copy import deepcopy
-from heuristic import Heuristic
-from is_solvable import is_solvable
-from time import time
+#! /Users/proshchy/N-Puzzle/venv/bin/python
 import argparse
+from time import time
+from copy import deepcopy
+from termcolor import colored
+from heuristic import Heuristic
 from parse_input_file import parse
+from is_solvable import is_solvable
+from generator import make_goal, make_puzzle, Node
 
 
 class NPuzzleSearch:
@@ -26,7 +26,6 @@ class NPuzzleSearch:
         # self.current_node = Node(puzzle=[[2,13,4,3], [14,8,10,9], [12,0,1,5], [15,6,7,11]])  # 4x4 solvable,
                                                                                              # 9.2 - manhatten,
                                                                                              # 7.2 - euclidian
-        # print(self.current_node)
         self.open_list = [self.current_node]
 
         self.max_g = 0
@@ -124,9 +123,7 @@ class NPuzzleSearch:
                                   heuristic=self.heuristic)
             h_score = heuristic.calculate()
             node.h = h_score
-            # print(h_score)
             node.f = self.get_f_score(h_score, node)
-            # print(node.f, h_score)
 
         # sort list of node by f-score, from higher to lower.
         self.open_list.sort(key=lambda x: x.f)
@@ -160,7 +157,6 @@ class NPuzzleSearch:
     def print_puzzle(self, node, color='yellow'):
         print(f"g-score: {node.g}\tf-score: {node.f}")
         # print(colored('*' * self.size * 4, 'red'))
-        # if
         for i in node.puzzle:
             print(colored(("{:^4}" * self.size).format(*i), color))
         print(colored('*' * self.size * 4, 'red'))
@@ -178,7 +174,11 @@ class NPuzzleSearch:
         if self.print_output:
             print(f"Solution history:")
             solution_way = [self.current_node]
+            # print(self.current_node.parent)
+            # try:
             node = self.current_node.parent
+            # except:
+            #     print()
             while node:
                 solution_way.append(node)
                 node = node.parent
@@ -196,6 +196,8 @@ class NPuzzleSearch:
                 list_of_equal_nodes = deepcopy(self.current_node)
                 for node in list_of_equal_nodes:
                     if self.is_goal(node):
+                        if type(self.current_node) == list:
+                            self.current_node = node
                         self.print_metrics()
                         exit()
                     else:
@@ -282,7 +284,6 @@ def main():
             exit()
 
         if is_solvable(puzzle=algorithm.current_node.puzzle, size=algorithm.size):
-            # print(colored("solvable: ", 'blue', attrs=['bold', 'blink']), colored('YES', 'green', attrs=['bold', 'blink']))
             try:
                 algorithm.solver()
             except KeyboardInterrupt:

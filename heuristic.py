@@ -1,5 +1,5 @@
-from numpy import array, where
 from math import sqrt
+from numpy import array, where
 
 
 class Heuristic:

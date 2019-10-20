@@ -26,7 +26,8 @@ def parse(filename):
         return puzzle
     else:
         print("Invalid input")
+        exit()
 
 
 if __name__ == "__main__":
-    print(parse(filename='test'))
+    print(parse(filename='not_valid_file'))
