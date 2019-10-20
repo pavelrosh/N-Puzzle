@@ -2,9 +2,13 @@ from config import PATH_TO_MAPS
 
 
 def clean_file(filename):
-    source = [line.split('#', 1)[0].split() for line in open(file=PATH_TO_MAPS + filename, mode='r')]
-    source = [line for line in source if len(line) > 0]
-    return source
+    try:
+        source = [line.split('#', 1)[0].split() for line in open(file=PATH_TO_MAPS + filename, mode='r')]
+        source = [line for line in source if len(line) > 0]
+        return source
+    except FileNotFoundError:
+        print("File not found!")
+        exit()
 
 
 def parse(filename):
