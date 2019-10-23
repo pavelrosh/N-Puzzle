@@ -3,7 +3,7 @@ You can read more about [N-Puzzle](https://en.wikipedia.org/wiki/15_puzzle).
 #### Goal:
 Reach state listed below from `random state`:
 
-![images/goal.png]
+![images/goal.png](images/goal.png)
 
 #### Usage:
 ![images/usage.png]
