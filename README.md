@@ -6,7 +6,7 @@ Reach state listed below from `random state`:
 ![images/goal.png](images/goal.png)
 
 #### Usage:
-![images/usage.png]
+![images/usage.png](images/usage.png)
 
 #### Search Algorithms:
 - `A*`
@@ -19,10 +19,10 @@ Reach state listed below from `random state`:
 - `Euclidian` `--heuristic=euclidian`
 
 ##### You can add `-p` for see solution trace
-![images/solution_command.png]
+![images/solution_command.png](images/solution_command.png)
 
-![images/solution.png]
+![images/solution.png](images/solution.png)
 
 #### Example
 
-![images/example.png]
+![images/example.png](images/example.png)
